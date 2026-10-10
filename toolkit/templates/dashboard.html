@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="hero">
+  <div class="hero-text">
+    <p class="eyebrow">Scam checks and screenshot privacy</p>
+    <h1>Check the message. Clean the screenshot.</h1>
+    <p class="lede">Six small tools for the moment a suspicious text arrives or you're about to share a screenshot.
+      Links are never opened, and nothing you paste is stored or logged.</p>
+  </div>
+  <aside class="progress-card" aria-labelledby="progress-text">
+    <p class="eyebrow">Build progress</p>
+    <p class="progress-text" id="progress-text">{{ live_count }} of {{ modules|length }} modules ready</p>
+    <div class="progress" role="meter" aria-label="Modules ready"
+         aria-valuemin="0" aria-valuemax="{{ modules|length }}" aria-valuenow="{{ live_count }}">
+      {% for m in modules %}<span class="seg {{ m.status }}" title="{{ m.number }}. {{ m.name }}"></span>{% endfor %}
+    </div>
+    <ul class="facts">
+      <li><span class="mono">0</span> links opened</li>
+      <li><span class="mono">0</span> messages stored or logged</li>
+      <li><span class="mono">0</span> trackers or cookies</li>
+    </ul>
+  </aside>
+</header>
+
+<section aria-labelledby="modules-h">
+  <div class="section-head">
+    <h2 id="modules-h">Modules</h2>
+    <p class="section-sub">Each tool works on its own. Module 6 joins them into one workflow.</p>
+  </div>
+  <ol class="module-grid">
+    {% for m in modules %}
+    <li class="module-card {{ m.status }}">
+      <div class="card-top">
+        <span class="card-num">{{ '%02d' % m.number }}</span>
+        <span class="status-pill {{ m.status }}">{{ 'Ready' if m.live else 'Planned' }}</span>
+      </div>
+      <h3>{% if m.live %}<a class="card-link" href="{{ url_for(m.endpoint) }}">{{ m.name }}</a>{% else %}{{ m.name }}{% endif %}</h3>
+      <p class="card-summary">{{ m.summary }}</p>
+      <p class="card-example"><span class="eyebrow">Example</span>{{ m.example }}</p>
+      {% if m.live %}
+        <span class="card-action" aria-hidden="true">Open {{ m.name }}</span>
+      {% else %}
+        <span class="card-action is-disabled">In development</span>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+
+<section class="flow" aria-labelledby="flow-h">
+  <div class="section-head"><h2 id="flow-h">The full screenshot workflow</h2></div>
+  <ol class="flow-steps">
+    <li><span class="step-n">1</span><strong>Upload</strong><span>A screenshot of a text or email</span></li>
+    <li><span class="step-n">2</span><strong>Review text</strong><span>OCR reads it, you fix any mistakes</span></li>
+    <li><span class="step-n">3</span><strong>Check warnings</strong><span>Scam tactics and real link domains</span></li>
+    <li><span class="step-n">4</span><strong>Redact</strong><span>Cover numbers, emails, names</span></li>
+    <li><span class="step-n">5</span><strong>Download</strong><span>A clean image with no metadata</span></li>
+  </ol>
+</section>
+
+{% include "partials/footer.html" %}
+{% endblock %}

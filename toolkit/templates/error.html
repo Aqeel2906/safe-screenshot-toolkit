@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Problem · Safe Screenshot Toolkit{% endblock %}
+{% block content %}
+<section class="panel error-panel">
+  <h1>Something went wrong</h1>
+  <p>{{ message }}</p>
+  <p><a class="btn-primary" href="{{ url_for('dashboard') }}">Back to all modules</a></p>
+</section>
+{% endblock %}

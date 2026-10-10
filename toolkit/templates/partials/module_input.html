@@ -1,0 +1,24 @@
+{# Shared input panel. Expects: action_endpoint, text, samples, active_sample, max_length, heading, placeholder, button #}
+<section class="panel input-panel" aria-labelledby="input-h">
+  <form method="post" action="{{ url_for(action_endpoint) }}" class="input-form">
+    <div class="panel-head">
+      <h2 id="input-h"><label for="message">{{ heading }}</label></h2>
+      <span class="count">up to {{ '{:,}'.format(max_length) }} characters</span>
+    </div>
+    <textarea id="message" name="message" spellcheck="false" autocomplete="off" required
+              placeholder="{{ placeholder }}">{{ text }}</textarea>
+    <div class="actions">
+      <a class="btn-quiet" href="{{ url_for(action_endpoint) }}">Clear</a>
+      <button type="submit" class="btn-primary">{{ button }}</button>
+    </div>
+  </form>
+  <div class="samples">
+    <p class="samples-label">Try an example</p>
+    <ul class="sample-list">
+      {% for label, _ in samples %}
+      <li><a class="sample" href="{{ url_for(action_endpoint, sample=loop.index0) }}"
+             {% if active_sample == loop.index0 %}aria-current="true"{% endif %}>{{ label }}</a></li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>

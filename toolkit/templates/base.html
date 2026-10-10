@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{% block title %}Safe Screenshot Toolkit{% endblock %}</title>
+<meta name="description" content="{% block description %}Spot scam messages and share screenshots safely.{% endblock %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+<nav class="topbar" aria-label="Main">
+  <div class="topbar-inner">
+    <a class="brand" href="{{ url_for('dashboard') }}"{% if request.endpoint == 'dashboard' %} aria-current="page"{% endif %}>
+      <span class="brand-mark" aria-hidden="true"></span>Safe Screenshot Toolkit
+    </a>
+    <ul class="module-nav">
+      {% for m in modules if m.live %}
+      <li><a href="{{ url_for(m.endpoint) }}"{% if current_module and current_module.slug == m.slug %} aria-current="page"{% endif %}>
+        <span class="mono">{{ m.number }}</span> {{ m.name }}</a></li>
+      {% endfor %}
+    </ul>
+  </div>
+</nav>
+
+<div class="wrap">
+  {% block content %}{% endblock %}
+</div>
+</body>
+</html>

@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Link Inspector · Safe Screenshot Toolkit{% endblock %}
+{% block description %}See where a link really goes without opening it.{% endblock %}
+{% block content %}
+{% set sev_label = {'high': 'High', 'medium': 'Medium', 'low': 'Low', 'info': 'Note'} %}
+{% set level_label = {'high': 'Dangerous', 'medium': 'Suspicious', 'low': 'Minor notes', 'none': 'No warnings'} %}
+
+<header class="masthead">
+  <p class="eyebrow">Module 2</p>
+  <h1>Link Inspector</h1>
+  <p class="lede">Paste a message or a link. It pulls out every address, shows the real website it goes to, and flags the
+    tricks scammers use to disguise it. Links are never opened or visited.</p>
+</header>
+
+<main class="workspace">
+  {% with action_endpoint='link_inspector.index', heading='Message or link', placeholder='Paste a message or link here…', button='Inspect links' %}
+    {% include "partials/module_input.html" %}
+  {% endwith %}
+
+  <section class="panel results" aria-labelledby="verdict-h">
+    {% if not result %}
+      <div class="verdict" data-level="none">
+        <div class="verdict-text">
+          <p class="eyebrow">Result</p>
+          <h2 id="verdict-h">Paste a link to inspect it</h2>
+          <p class="verdict-sub">Defanged links like hxxps://example[.]com work too.</p>
+        </div>
+      </div>
+    {% elif not result.links %}
+      <div class="verdict" data-level="none">
+        <div class="verdict-text">
+          <p class="eyebrow">Result</p>
+          <h2 id="verdict-h">No links found</h2>
+          <p class="verdict-sub">Nothing in that text looks like a web address. If a link was shown as a button in the
+            original message, copy the link itself (long-press it and choose Copy link).</p>
+        </div>
+      </div>
+    {% else %}
+      {% set worst = result.worst_level %}
+      {% set count = result.links | length %}
+      <div class="verdict" data-level="{{ 'safe' if worst == 'none' else worst }}">
+        <div class="verdict-text">
+          <p class="eyebrow">{{ count }} link{{ 's' if count != 1 }} found</p>
+          <h2 id="verdict-h">
+            {%- if worst == 'high' %}Don't open {{ 'this link' if count == 1 else 'these links' }}
+            {%- elif worst == 'medium' %}Be careful with {{ 'this link' if count == 1 else 'these links' }}
+            {%- elif worst == 'low' %}Minor things to note
+            {%- else %}No warning signs in {{ 'this address' if count == 1 else 'these addresses' }}{% endif -%}
+          </h2>
+          <p class="verdict-sub">The highlighted name is the website each link really goes to.
+            {%- if result.defanged %} Defanged links (hxxp, [.]) were converted so they could be checked.{% endif %}
+            {%- if result.truncated %} Only the first {{ '{:,}'.format(max_length) }} characters were checked.{% endif %}</p>
+        </div>
+      </div>
+
+      <ol class="link-list">
+        {% for r in result.links %}
+        <li class="link-card lvl-{{ r.level }}">
+          <div class="link-head">
+            <span class="level-pill lvl-{{ r.level }}">{{ level_label[r.level] }}</span>
+            {% if r.owner and r.level == 'none' %}<span class="owner">Real {{ r.owner }} website</span>{% endif %}
+          </div>
+
+          <p class="eyebrow">Goes to</p>
+          {# The registered domain is what decides where a link goes, so it gets the emphasis. #}
+          <p class="host-line"><span class="host-prefix">{{ r.host_prefix }}</span><span class="host-reg">{{ r.registered_domain or r.host }}</span>{% if r.port %}<span class="host-rest">:{{ r.port }}</span>{% endif %}<span class="host-rest">{{ r.path }}{% if r.query %}?{{ r.query }}{% endif %}</span></p>
+
+          <dl class="link-facts">
+            <div><dt>As written</dt><dd class="mono">{{ r.original }}</dd></div>
+            {% if r.host_unicode and r.host_unicode != r.host %}<div><dt>Real form</dt><dd class="mono">{{ r.host }}</dd></div>{% endif %}
+            {% if r.subdomain %}<div><dt>Subdomain</dt><dd class="mono">{{ r.subdomain }}</dd></div>{% endif %}
+            {% if r.userinfo %}<div><dt>Decoy before @</dt><dd class="mono">{{ r.userinfo }}</dd></div>{% endif %}
+            {% if r.redirect_target %}<div><dt>Hidden destination</dt><dd class="mono">{{ r.redirect_target }}</dd></div>{% endif %}
+            <div><dt>Encrypted</dt><dd>{{ 'Yes (https)' if r.scheme == 'https' else 'No (http)' if r.scheme == 'http' else 'Not stated' }}</dd></div>
+          </dl>
+
+          {% if r.findings %}
+          <ul class="link-findings">
+            {% for f in r.findings %}
+            <li class="finding sev-{{ f.severity }}">
+              <div class="finding-head">
+                <h3>{{ f.label }}</h3>
+                <span class="chip">{{ sev_label[f.severity] }}</span>
+              </div>
+              <p>{{ f.explain }}</p>
+            </li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ol>
+    {% endif %}
+
+    <p class="footnote">The Link Inspector reads the address only. It doesn't visit the site, so it can't tell whether a
+      page on a genuine domain has been hacked. When in doubt, type the company's address yourself instead of tapping the link.</p>
+  </section>
+</main>
+{% endblock %}

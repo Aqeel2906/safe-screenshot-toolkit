@@ -1,0 +1,7 @@
+{# Risk meter built from 10 segments, so no inline style is needed (the CSP blocks inline styles). Expects: score #}
+<div class="meter" role="meter" aria-label="Risk score" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ score }}">
+  <span class="meter-num">{{ score }}</span><span class="meter-of">/100</span>
+  <div class="meter-track" aria-hidden="true">
+    {% for i in range(10) %}<span class="{{ 'on' if score >= (i + 1) * 10 or (i == 0 and score > 0) else '' }}"></span>{% endfor %}
+  </div>
+</div>

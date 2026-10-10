@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Message Checker · Safe Screenshot Toolkit{% endblock %}
+{% block description %}Check a text message or email for common scam tactics.{% endblock %}
+{% block content %}
+{% set verdicts = {
+  'none':   ('No common warning signs found', "That doesn't prove it's genuine. If you weren't expecting it, check with the sender another way."),
+  'low':    ('Minor things to note', 'Nothing strongly suspicious, but read the notes below.'),
+  'medium': ('Be careful with this message', 'It uses tactics common in scams. Check before you reply or click anything.'),
+  'high':   ('This looks like a scam', 'Several warning signs together. Don\'t reply, click links, or send money or codes.'),
+} %}
+{% set sev_label = {'high': 'High', 'medium': 'Medium', 'low': 'Low', 'info': 'Info'} %}
+
+<header class="masthead">
+  <p class="eyebrow">Module 1</p>
+  <h1>Message Checker</h1>
+  <p class="lede">Paste a text, WhatsApp or email you weren't expecting. It checks for pressure, payment demands, threats
+    and requests for passwords or codes, and explains each one. Nothing you paste is stored.</p>
+</header>
+
+<main class="workspace">
+  {% with action_endpoint='message_checker.index', heading='Message', placeholder='Paste the message here…', button='Check message' %}
+    {% include "partials/module_input.html" %}
+  {% endwith %}
+
+  <section class="panel results" aria-labelledby="verdict-h">
+    {% if not report %}
+      <div class="verdict" data-level="none">
+        <div class="verdict-text">
+          <p class="eyebrow">Result</p>
+          <h2 id="verdict-h">Paste a message to check it</h2>
+          <p class="verdict-sub">Or pick one of the examples to see how it works.</p>
+        </div>
+      </div>
+    {% else %}
+      {% set title, sub = verdicts[report.level] %}
+      <div class="verdict" data-level="{{ 'safe' if report.level == 'none' else report.level }}">
+        <div class="verdict-text">
+          <p class="eyebrow">Result</p>
+          <h2 id="verdict-h">{{ title }}</h2>
+          <p class="verdict-sub">{{ sub }}{% if report.truncated %} Only the first {{ '{:,}'.format(max_length) }} characters were checked.{% endif %}</p>
+        </div>
+        {% with score=report.score %}{% include "partials/meter.html" %}{% endwith %}
+      </div>
+
+      {% if report.findings %}
+      <div>
+        <p class="eyebrow">What was flagged</p>
+        {# Each segment is auto-escaped by Jinja, so pasted HTML is shown as text and never runs. #}
+        <div class="bubble">{% for s in segments %}{% if s.severity %}<mark class="hl sev-{{ s.severity }}" title="{{ s.label }}">{{ s.text }}</mark>{% else %}{{ s.text }}{% endif %}{% endfor %}</div>
+        <ul class="legend" aria-label="Highlight key">
+          <li><span class="swatch sev-high"></span>High</li>
+          <li><span class="swatch sev-medium"></span>Medium</li>
+          <li><span class="swatch sev-low"></span>Low</li>
+          <li><span class="swatch sev-info"></span>Info</li>
+        </ul>
+      </div>
+      {% endif %}
+
+      {% if report.combos %}
+      <div>
+        <p class="eyebrow">Warning signs together</p>
+        <ul class="combos">
+          {% for c in report.combos %}<li><span>{{ c.reason }}</span><span class="pts">+{{ c.bonus }}</span></li>{% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      {% set has_link = report.findings | selectattr('id', 'equalto', 'link') | list %}
+      {% if has_link and is_live('link-inspector') %}
+      <form class="handoff" method="post" action="{{ url_for('link_inspector.index') }}">
+        <input type="hidden" name="message" value="{{ text }}">
+        <p>This message contains a link. See where it really goes without opening it.</p>
+        <button type="submit" class="btn-primary">Inspect the links</button>
+      </form>
+      {% endif %}
+
+      <ol class="findings">
+        {% for f in findings %}
+        <li class="finding sev-{{ f.severity }}">
+          <div class="finding-head">
+            <h3>{{ f.label }}</h3>
+            <span class="chip">{{ sev_label[f.severity] }} · +{{ f.points }}</span>
+          </div>
+          <ul class="quotes" aria-label="Matched text">
+            {% for m in f.matches | map(attribute='text') | map('trim') | unique(case_sensitive=false) %}<li>“{{ m }}”</li>{% endfor %}
+          </ul>
+          <p>{{ f.explain }}</p>
+          <p class="advice"><strong>What to do: </strong>{{ f.advice }}</p>
+        </li>
+        {% endfor %}
+      </ol>
+    {% endif %}
+
+    <p class="footnote">This checker looks for patterns used in common scams. It can miss new tricks, and finding nothing
+      doesn't prove a message is genuine. In the UK you can forward scam texts free to <span class="mono">7726</span>.</p>
+  </section>
+</main>
+{% endblock %}
